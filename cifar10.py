@@ -1,5 +1,5 @@
 '''
-CIFAR10 example using KEras & TensorFlow
+CIFAR10 example using Keras & TensorFlow
 '''
 
 import numpy as np

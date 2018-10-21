@@ -1,2 +1,2 @@
-# tf_cifar10
-CIFAR10 machine learning example
+# Cifar10_Keras
+CIFAR10 machine learning example using Keras

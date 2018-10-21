@@ -1,9 +1,6 @@
 '''
 CIFAR10 example using Keras & TensorFlow
 '''
-
-import numpy as np
-
 from keras.callbacks import EarlyStopping
 from keras.datasets import cifar10
 from keras.models import Sequential

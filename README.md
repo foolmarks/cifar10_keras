@@ -1,5 +1,7 @@
 # Cifar10_Keras
-CIFAR10 machine learning example using Keras
+CIFAR10 machine learning example using Tensorflow & Keras
+
+Tested with Tensorflow ver 1.12
 
 Demonstrates the following:
 
@@ -9,5 +11,5 @@ Demonstrates the following:
  - how to compile, train, evaluate the model.
  - how to make predictions with the trained model.
  - how to save the Keras model as HDF5 and JSON formats.
- - how to freeze the TF graph to a protobuf file from keras
+ - how to freeze the TF graph to a protobuf file from Keras
  

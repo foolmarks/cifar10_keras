@@ -9,4 +9,5 @@ Demonstrates the following:
  - how to compile, train, evaluate the model.
  - how to make predictions with the trained model.
  - how to save the Keras model as HDF5 and JSON formats.
+ - how to freeze the TF graph to a protobuf file from keras
  

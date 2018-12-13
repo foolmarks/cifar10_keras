@@ -64,11 +64,14 @@ TB_LOG_DIR = os.path.join(SCRIPT_DIR, 'tb_logs')
 MODEL_DIR = os.path.join(SCRIPT_DIR, 'model')
 CHKPT_DIR = os.path.join(SCRIPT_DIR, 'chkpts')
 
-
+'''
+# optional code to delete existing TensorBoard logs
 if (os.path.exists(TB_LOG_DIR)):
     shutil.rmtree(TB_LOG_DIR)
 os.makedirs(TB_LOG_DIR)
 print("Directory " , TB_LOG_DIR ,  "created ") 
+'''
+
 
 if (os.path.exists(MODEL_DIR)):
     shutil.rmtree(MODEL_DIR)
@@ -143,7 +146,7 @@ tb_call = tf.keras.callbacks.TensorBoard(log_dir=TB_LOG_DIR,
 earlystop_call = tf.keras.callbacks.EarlyStopping(min_delta=0.001, patience=3)
 
 # checkpoint save callback
-chk_call = tf.keras.callbacks.ModelCheckpoint(CHKPT_DIR, save_best_only=True,)
+chk_call = tf.keras.callbacks.ModelCheckpoint(CHKPT_DIR, save_best_only=True)
 
 
 

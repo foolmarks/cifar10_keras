@@ -234,7 +234,7 @@ tf.train.write_graph(frozen_graph, MODEL_DIR, "tf_model.pbtxt", as_text=True)
 
 
 
-print("\nTensorBoard can be opened with the command:  tensorboard --logdir=./tb_logs")
+print("\nTensorBoard can be opened with the command:  tensorboard --logdir=./{dir} --host localhost --port 6006".format(dir=TB_LOG_DIR))
 
 print("\nFINISHED")
 

@@ -75,6 +75,11 @@ if (os.path.exists(MODEL_DIR)):
 os.makedirs(MODEL_DIR)
 print("Directory " , MODEL_DIR ,  "created ") 
 
+if (os.path.exists(CHKPT_DIR)):
+    shutil.rmtree(CHKPT_DIR)
+os.makedirs(CHKPT_DIR)
+print("Directory " , CHKPT_DIR ,  "created ") 
+
 
 
 ##############################################

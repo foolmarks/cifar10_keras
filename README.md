@@ -13,3 +13,6 @@ Demonstrates the following:
  - how to save the Keras model as HDF5 and JSON formats.
  - how to freeze the TF graph to a protobuf file from Keras
  
+Jupyter notebook <a href="https://github.com/foolmarks/cifar10_keras/blob/master/cifar10_keras.ipynb">here.</a>
+
+Python source code <a href="https://github.com/foolmarks/cifar10_keras/blob/master/cifar10_keras.py">here.</a>

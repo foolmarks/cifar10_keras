@@ -3,21 +3,19 @@ CIFAR10 example using Tensorflow & Keras
 '''
 
 import os
+import sys
 import shutil
 import numpy as np
 import tensorflow as tf
 
 
+
+#####################################################
+# Housekeeping
+#####################################################
 print("Tensorflow version. ", tf.VERSION)
 print("Keras version. ", tf.keras.__version__)
 
-
-# Hyperparameters
-# training is unlikely to reach 250 epochs due to earlystop callback
-BATCHSIZE = 128
-EPOCHS = 250
-LEARN_RATE = 0.0001
-DECAY_RATE = 1e-6
 
 ##############################################
 # Freeze graph
@@ -57,32 +55,69 @@ def freeze_session(session, keep_var_names=None, output_names=None, clear_device
 ##############################################
 # Set up directories
 ##############################################
+# Returns the directory the current script (or interpreter) is running in
+def get_script_directory():
+    path = os.path.realpath(sys.argv[0])
+    if os.path.isdir(path):
+        return path
+    else:
+        return os.path.dirname(path)
 
-# Directories
-SCRIPT_DIR = os.path.dirname(os.path.abspath( __file__ ))
-TB_LOG_DIR = os.path.join(SCRIPT_DIR, 'tb_logs')
+
+SCRIPT_DIR = get_script_directory()
+print('This script is located in: ', SCRIPT_DIR)
+
+CHKPT_FILE="float-model-{epoch:02d}-{val_acc:.2f}.hdf5"
+FROZEN_GRAPH_FILE = 'frozen_graph.pb'
+
 MODEL_DIR = os.path.join(SCRIPT_DIR, 'model')
 CHKPT_DIR = os.path.join(SCRIPT_DIR, 'chkpts')
+TB_LOG_DIR = os.path.join(SCRIPT_DIR, 'tb_logs')
+FREEZE_DIR = os.path.join(SCRIPT_DIR, 'freeze')
+CHKPT_PATH = os.path.join(CHKPT_DIR, CHKPT_FILE)
 
-'''
-# optional code to delete existing TensorBoard logs
+
+# create a directory for the saved model if it doesn't already exist
+# delete it and recreate if it already exists
+if (os.path.exists(MODEL_DIR)):
+    shutil.rmtree(MODEL_DIR)
+os.makedirs(MODEL_DIR)
+print("Directory " , MODEL_DIR ,  "created ")
+
+
+# create a directory for the TensorBoard data if it doesn't already exist
+# delete it and recreate if it already exists
 if (os.path.exists(TB_LOG_DIR)):
     shutil.rmtree(TB_LOG_DIR)
 os.makedirs(TB_LOG_DIR)
 print("Directory " , TB_LOG_DIR ,  "created ") 
-'''
 
 
-if (os.path.exists(MODEL_DIR)):
-    shutil.rmtree(MODEL_DIR)
-os.makedirs(MODEL_DIR)
-print("Directory " , MODEL_DIR ,  "created ") 
-
+# create a directory for the checkpoints if it doesn't already exist
+# delete it and recreate if it already exists
 if (os.path.exists(CHKPT_DIR)):
     shutil.rmtree(CHKPT_DIR)
 os.makedirs(CHKPT_DIR)
-print("Directory " , CHKPT_DIR ,  "created ") 
+print("Directory " , CHKPT_DIR ,  "created ")
 
+
+# create a directory for the frozen graph if it doesn't already exist
+# delete it and recreate if it already exists
+if (os.path.exists(FREEZE_DIR)):
+    shutil.rmtree(FREEZE_DIR)
+os.makedirs(FREEZE_DIR)
+print("Directory " , FREEZE_DIR ,  "created ")
+
+
+
+#####################################################
+# Hyperparameters
+#####################################################
+# training is unlikely to reach 250 epochs due to earlystop callback
+BATCHSIZE = 50
+EPOCHS = 250
+LEARN_RATE = 0.0001
+DECAY_RATE = 1e-6
 
 
 ##############################################
@@ -107,18 +142,15 @@ class_names = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', '
 model = tf.keras.models.Sequential()
 
 model.add(tf.keras.layers.Conv2D(32, kernel_size=(3, 3), activation='relu', input_shape=(32, 32, 3)))
+model.add(tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=(2,2)))
 model.add(tf.keras.layers.Conv2D(64, kernel_size=(3, 3), activation='relu'))
-model.add(tf.keras.layers.MaxPooling2D(pool_size=(2, 2)))
-model.add(tf.keras.layers.Dropout(0.25))
+model.add(tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=(2,2)))
 model.add(tf.keras.layers.Conv2D(128, kernel_size=(3, 3), activation='relu'))
-model.add(tf.keras.layers.MaxPooling2D(pool_size=(2, 2)))
-model.add(tf.keras.layers.Conv2D(128, kernel_size=(3, 3), activation='relu'))
-model.add(tf.keras.layers.MaxPooling2D(pool_size=(2, 2)))
-model.add(tf.keras.layers.Dropout(0.25))
+model.add(tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=(2,2)))
 model.add(tf.keras.layers.Flatten())
 model.add(tf.keras.layers.Dense(1024, activation='relu'))
-model.add(tf.keras.layers.Dropout(0.5))
 model.add(tf.keras.layers.Dense(10, activation='softmax'))
+
 
 # print a summary of the model
 print(model.summary())
@@ -146,7 +178,7 @@ tb_call = tf.keras.callbacks.TensorBoard(log_dir=TB_LOG_DIR,
 earlystop_call = tf.keras.callbacks.EarlyStopping(min_delta=0.001, patience=3)
 
 # checkpoint save callback
-chk_call = tf.keras.callbacks.ModelCheckpoint(CHKPT_DIR, save_best_only=True)
+chk_call = tf.keras.callbacks.ModelCheckpoint(CHKPT_PATH, save_best_only=True)
 
 
 
@@ -155,7 +187,7 @@ chk_call = tf.keras.callbacks.ModelCheckpoint(CHKPT_DIR, save_best_only=True)
 ##############################################
 model.compile(loss='categorical_crossentropy', 
               optimizer=tf.keras.optimizers.Adam(lr=LEARN_RATE,
-              decay=DECAY_RATE),
+                                                 decay=DECAY_RATE),
               metrics=['accuracy'])
 
 ##############################################
@@ -176,10 +208,10 @@ scores = model.evaluate(X_test, tf.keras.utils.to_categorical(Y_test))
 print('Loss: %.3f' % scores[0])
 print('Accuracy: %.3f' % scores[1])
 
+
 ##############################################
 # Used trained model to make predictions
 ##############################################
-
 print("\nLet's make some predictions with the trained model..\n")
 predictions = model.predict(X_test)
 
@@ -194,12 +226,13 @@ for i in range(10):
     print("Sample {index} in the test set is: {pred}".format(index=i, pred=pred))
     print("Sample {index} in test set actually is: {actual}".format(index=i, actual=actual))
 
+
 ##############################################
 # Save the model in keras format
 ##############################################
 print("\nSaving the Keras model in keras format..")
 
-# save just the weights to an HDF5 format file
+# save just the weights (no architecture) to an HDF5 format file
 model.save_weights(os.path.join(MODEL_DIR,'k_model_weights.h5'), save_format='h5')
 
 # save just the architecture (no weights) to a JSON file
@@ -208,14 +241,6 @@ with open(os.path.join(MODEL_DIR,'k_model_architecture.json'), 'w') as f:
 
 # save weights, model architecture & optimizer to an HDF5 format file
 model.save(os.path.join(MODEL_DIR,'k_complete_model.h5'))
-
-##############################################
-# Save the model in tensorflow format
-##############################################
-print("\nSaving the Keras model in TF format..")
-
-# save just the weights to a TF checkpoint format file
-model.save_weights(os.path.join(MODEL_DIR,'tf_model_weights.ckpt'), save_format='tf')
 
 
 
@@ -228,15 +253,10 @@ print("\nCreating frozen graphs and protobuf files..")
 frozen_graph = freeze_session(tf.keras.backend.get_session(),
                               output_names=[out.op.name for out in model.outputs])
 
-# Save protobuf files
-tf.train.write_graph(frozen_graph, MODEL_DIR, "tf_model.pb", as_text=False)
-tf.train.write_graph(frozen_graph, MODEL_DIR, "tf_model.pbtxt", as_text=True)
+# Save the frozen graph as text & binary protobuf
+tf.train.write_graph(frozen_graph, FREEZE_DIR, FROZEN_GRAPH_FILE, as_text=False)
 
 
 
-print("\nTensorBoard can be opened with the command:  tensorboard --logdir=./{dir} --host localhost --port 6006".format(dir=TB_LOG_DIR))
-
+print("\nTensorBoard can be opened with the command:  tensorboard --logdir={dir} --host localhost --port 6006".format(dir=TB_LOG_DIR))
 print("\nFINISHED")
-
-
-

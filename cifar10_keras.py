@@ -80,7 +80,7 @@ print("Directory " , FREEZE_DIR ,  "created ")
 #####################################################
 # training is unlikely to reach 250 epochs due to earlystop callback
 BATCHSIZE = 100
-EPOCHS = 1
+EPOCHS = 250
 LEARN_RATE = 0.0001
 DECAY_RATE = 1e-6
 
@@ -218,20 +218,15 @@ print("\nCreating frozen graphs and protobuf files..")
 # import the tensorflow module
 from tensorflow.python.framework.graph_util import convert_variables_to_constants
 
-
 # fetch the tensorflow session using the Keras backend
 tf_session = tf.keras.backend.get_session()
 
-
 # make list of output node names
-# model.outputs - seee https://keras.io/models/about-keras-models/#about-keras-models
 output_names=[out.op.name for out in model.outputs]
 print('Found output node names: ', output_names)
 
-
 # serialize the session graph to graphDef
 input_graph_def = tf_session.graph.as_graph_def()
-
 
 # clear devices property from every node
 for node in input_graph_def.node:

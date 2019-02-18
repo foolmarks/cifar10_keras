@@ -18,41 +18,6 @@ print("Keras version. ", tf.keras.__version__)
 
 
 ##############################################
-# Freeze graph
-# https://stackoverflow.com/questions/45466020/how-to-export-keras-h5-to-tensorflow-pb
-##############################################
-def freeze_session(session, keep_var_names=None, output_names=None, clear_devices=True):
-    """
-    Freezes the state of a session into a pruned computation graph.
-
-    Creates a new computation graph where variable nodes are replaced by
-    constants taking their current value in the session. The new graph will be
-    pruned so subgraphs that are not necessary to compute the requested
-    outputs are removed.
-    @param session The TensorFlow session to be frozen.
-    @param keep_var_names A list of variable names that should not be frozen,
-                          or None to freeze all the variables in the graph.
-    @param output_names Names of the relevant graph outputs.
-    @param clear_devices Remove the device directives from the graph for better portability.
-    @return The frozen graph definition.
-    """
-    from tensorflow.python.framework.graph_util import convert_variables_to_constants
-    graph = session.graph
-    with graph.as_default():
-        freeze_var_names = list(set(v.op.name for v in tf.global_variables()).difference(keep_var_names or []))
-        output_names = output_names or []
-        output_names += [v.op.name for v in tf.global_variables()]
-        # Graph -> GraphDef ProtoBuf
-        input_graph_def = graph.as_graph_def()
-        if clear_devices:
-            for node in input_graph_def.node:
-                node.device = ""
-        frozen_graph = convert_variables_to_constants(session, input_graph_def,
-                                                      output_names, freeze_var_names)
-        return frozen_graph
-
-
-##############################################
 # Set up directories
 ##############################################
 # Returns the directory the current script (or interpreter) is running in
@@ -114,8 +79,8 @@ print("Directory " , FREEZE_DIR ,  "created ")
 # Hyperparameters
 #####################################################
 # training is unlikely to reach 250 epochs due to earlystop callback
-BATCHSIZE = 50
-EPOCHS = 250
+BATCHSIZE = 100
+EPOCHS = 1
 LEARN_RATE = 0.0001
 DECAY_RATE = 1e-6
 
@@ -250,12 +215,33 @@ model.save(os.path.join(MODEL_DIR,'k_complete_model.h5'))
 print("\nCreating frozen graphs and protobuf files..")
 
 
-frozen_graph = freeze_session(tf.keras.backend.get_session(),
-                              output_names=[out.op.name for out in model.outputs])
+# import the tensorflow module
+from tensorflow.python.framework.graph_util import convert_variables_to_constants
 
-# Save the frozen graph as text & binary protobuf
+
+# fetch the tensorflow session using the Keras backend
+tf_session = tf.keras.backend.get_session()
+
+
+# make list of output node names
+# model.outputs - seee https://keras.io/models/about-keras-models/#about-keras-models
+output_names=[out.op.name for out in model.outputs]
+print('Found output node names: ', output_names)
+
+
+# serialize the session graph to graphDef
+input_graph_def = tf_session.graph.as_graph_def()
+
+
+# clear devices property from every node
+for node in input_graph_def.node:
+    node.device = ''
+
+# create a new serialized graphDef with variables converted to constants
+frozen_graph = convert_variables_to_constants(tf_session, input_graph_def, output_names)
+
+# Save the frozen graphDef as binary protobuf
 tf.train.write_graph(frozen_graph, FREEZE_DIR, FROZEN_GRAPH_FILE, as_text=False)
-
 
 
 print("\nTensorBoard can be opened with the command:  tensorboard --logdir={dir} --host localhost --port 6006".format(dir=TB_LOG_DIR))

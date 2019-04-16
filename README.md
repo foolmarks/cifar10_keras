@@ -3,7 +3,7 @@ CIFAR10 machine learning example using Keras
 
 Demonstrates the following:
 
- - how to create a simple CNN using a Keras functionalmodel API.
+ - how to create a simple CNN using a Keras functional model API.
  - how load the CIFAR10 dataset and normalize the image values.
  - how to set up Keras callbacks for Tensorboard logging, early stopping and checkpoint saving.
  - how to compile, train, evaluate the model.
